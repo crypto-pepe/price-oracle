@@ -1,0 +1,8 @@
+[package]
+name = "p2p-price-oracle"
+version = "0.0.1"
+edition = "2018"
+
+[[bin]]
+name = "oracle"
+path = "src/main.rs"
