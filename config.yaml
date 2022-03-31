@@ -1,0 +1,20 @@
+providers:
+  - kind: binance
+    enabled: true
+    endpoint: "https://api.binance.com"
+    delay:
+      batch: 5s
+      request: 100ms
+    tickers:
+      - BTC
+      - ETH
+      - WAVES
+  - kind: bitfinex
+    enabled: true
+    endpoint: "https://api-pub.bitfinex.com"
+    delay:
+      batch: 5s
+      request: 100ms
+    tickers:
+      - BTC
+      - ETH
