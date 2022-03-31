@@ -6,8 +6,8 @@ use bigdecimal::BigDecimal;
 use pepe_log::error;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::{thread::sleep, time::Duration};
-use tokio::sync::mpsc::Sender;
+use std::time::Duration;
+use tokio::{sync::mpsc::Sender, time::sleep};
 
 const BINANCE_PROVIDER_NAME: &str = "binance";
 const USD_TICKER: &str = "USDT";
@@ -75,9 +75,9 @@ impl Provider for BinanceProvider {
                     }
                 };
 
-                sleep(self.request_delay)
+                sleep(self.request_delay).await
             }
-            sleep(self.batch_delay)
+            sleep(self.batch_delay).await
         }
     }
 }

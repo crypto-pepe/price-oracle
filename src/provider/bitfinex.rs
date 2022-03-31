@@ -7,8 +7,9 @@ use bigdecimal::FromPrimitive;
 use pepe_log::error;
 use reqwest::Client;
 use std::ops::Mul;
-use std::{thread::sleep, time::Duration};
+use std::time::Duration;
 use tokio::sync::mpsc::Sender;
+use tokio::time::sleep;
 
 const BITFINEX_PROVIDER_NAME: &str = "bitfinex";
 const USD_TICKER: &str = "USD";
@@ -83,9 +84,9 @@ impl Provider for BitfinexProvider {
                     }
                 };
 
-                sleep(self.request_delay)
+                sleep(self.request_delay).await
             }
-            sleep(self.batch_delay)
+            sleep(self.batch_delay).await
         }
     }
 }
