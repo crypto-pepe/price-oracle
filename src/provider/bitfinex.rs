@@ -4,9 +4,9 @@ use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
 use bigdecimal::FromPrimitive;
+use chrono::Utc;
 use pepe_log::error;
 use reqwest::Client;
-use std::ops::Mul;
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::time::sleep;
@@ -49,20 +49,20 @@ impl BitfinexProvider {
             .ok_or(Error::ProviderError(String::from(
                 "can't decode price format",
             )))?;
-        let mut quote_volume = res
+        let volume = res
             .get(7)
             .ok_or(Error::ProviderError(String::from("can't decode volume")))
             .map(|num| BigDecimal::from_f64(num.clone()))?
             .ok_or(Error::ProviderError(String::from(
                 "can't decode volume format",
             )))?;
-        quote_volume = quote_volume.mul(&price);
 
         Ok(MarketData {
             provider: BITFINEX_PROVIDER_NAME.to_string(),
             ticker,
             price,
-            quote_volume: quote_volume,
+            volume: volume,
+            timestamp: Utc::now().timestamp(),
         })
     }
 }
@@ -76,11 +76,11 @@ impl Provider for BitfinexProvider {
                     Ok(market_data) => {
                         match tx.send(market_data).await {
                             Ok(_) => {}
-                            Err(e) => error!("can't push market from bitfinex to channel: {:?}", e),
+                            Err(e) => error!("can't push market from bitfinex to channel: {}", e),
                         };
                     }
                     Err(e) => {
-                        error!("can't get market from bitfinex: {:?}", e);
+                        error!("can't get market from bitfinex: {}", e);
                     }
                 };
 

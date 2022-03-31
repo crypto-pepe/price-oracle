@@ -1,3 +1,7 @@
+price_oracle:
+  delay: 5s
+  ttl: 1m
+
 providers:
   - kind: binance
     enabled: true

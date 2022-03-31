@@ -14,7 +14,8 @@ pub struct MarketData {
     pub provider: String,
     pub ticker: String,
     pub price: BigDecimal,
-    pub quote_volume: BigDecimal,
+    pub volume: BigDecimal,
+    pub timestamp: i64,
 }
 
 #[async_trait]

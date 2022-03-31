@@ -1,8 +1,11 @@
-use std::{sync::Arc, thread::sleep, time::Duration};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use tokio::time::sleep;
 
 use crate::{
     config::AppConfig,
     error::Error,
+    price_oracle::PriceOracle,
     provider::{BinanceProvider, BitfinexProvider, MarketData, Provider},
 };
 use pepe_config::load;
@@ -11,6 +14,7 @@ use tokio::sync::mpsc;
 
 mod config;
 mod error;
+mod price_oracle;
 mod provider;
 
 const DEFAULT_CONFIG_PATH: &str = include_str!("../config.yaml");
@@ -37,6 +41,9 @@ async fn main() -> Result<(), Error> {
         })
         .collect::<Result<Vec<Arc<dyn Provider>>, Error>>()?;
 
+    let price_oracle = Arc::new(RwLock::new(PriceOracle::new(
+        &app_config.price_oracle.ttl.into(),
+    )));
     let (tx, mut rx) = mpsc::channel::<MarketData>(100);
     // start providers
     for provider_wrapper in &providers {
@@ -48,10 +55,29 @@ async fn main() -> Result<(), Error> {
         });
     }
 
+    let price_oracle_consumer = price_oracle.clone();
+    tokio::spawn(async move {
+        loop {
+            sleep(app_config.price_oracle.delay.into()).await;
+
+            let oracle = price_oracle_consumer.read().await;
+            match oracle.collect() {
+                Ok(prices) => {
+                    for price in prices.iter() {
+                        info!("provider market data"; "price" => &price);
+                    }
+                }
+                Err(e) => error!("can't collect prices: {}", e),
+            };
+        }
+    });
+
     loop {
         match rx.recv().await {
             Some(market_data) => {
-                info!("provider market data"; "data" => &market_data);
+                // info!("provider market data"; "data" => &market_data);
+                let mut oracle = price_oracle.write().await;
+                oracle.consume(&market_data);
             }
             None => {
                 error!("can't get market data from channel");
@@ -60,6 +86,5 @@ async fn main() -> Result<(), Error> {
         }
     }
 
-    sleep(Duration::from_secs(1));
     Ok(())
 }

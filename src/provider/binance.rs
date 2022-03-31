@@ -3,6 +3,7 @@ use crate::config::ProviderConfig;
 use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
+use chrono::Utc;
 use pepe_log::error;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -14,10 +15,10 @@ const USD_TICKER: &str = "USDT";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Response24h {
-    #[serde(rename(deserialize = "weightedAvgPrice"))]
-    weighted_avg_price: BigDecimal,
+    #[serde(rename(deserialize = "lastPrice"))]
+    last_price: BigDecimal,
     #[serde(rename(deserialize = "quoteVolume"))]
-    quote_volume: BigDecimal,
+    volume: BigDecimal,
 }
 
 #[derive(Debug, Clone)]
@@ -52,8 +53,9 @@ impl BinanceProvider {
         Ok(MarketData {
             provider: BINANCE_PROVIDER_NAME.to_string(),
             ticker,
-            price: res.weighted_avg_price,
-            quote_volume: res.quote_volume,
+            price: res.last_price,
+            volume: res.volume,
+            timestamp: Utc::now().timestamp(),
         })
     }
 }
@@ -67,11 +69,11 @@ impl Provider for BinanceProvider {
                     Ok(market_data) => {
                         match tx.send(market_data).await {
                             Ok(_) => {}
-                            Err(e) => error!("can't push market from binance to channel: {:?}", e),
+                            Err(e) => error!("can't push market from binance to channel: {}", e),
                         };
                     }
                     Err(e) => {
-                        error!("can't get market from binance: {:?}", e);
+                        error!("can't get market from binance: {}", e);
                     }
                 };
 
