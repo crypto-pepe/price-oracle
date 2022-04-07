@@ -1,7 +1,3 @@
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tokio::time::sleep;
-
 use crate::{
     config::AppConfig,
     error::Error,
@@ -10,7 +6,10 @@ use crate::{
 };
 use pepe_config::load;
 use pepe_log::{error, info};
+use std::sync::Arc;
 use tokio::sync::mpsc;
+use tokio::sync::RwLock;
+use tokio::time::sleep;
 
 mod config;
 mod error;
@@ -66,6 +65,14 @@ async fn main() -> Result<(), Error> {
                     for price in prices.iter() {
                         info!("provider market data"; "price" => &price);
                     }
+                    // match swarm.behaviour_mut().gossipsub.publish(topic.clone(), []) {
+                    //     Ok(id) => {
+                    //         debug!("publish data success"; "id" => id.to_string());
+                    //     }
+                    //     Err(e) => {
+                    //         error!("can't collect prices: {}", e);
+                    //     }
+                    // };
                 }
                 Err(e) => error!("can't collect prices: {}", e),
             };
@@ -73,15 +80,18 @@ async fn main() -> Result<(), Error> {
     });
 
     loop {
-        match rx.recv().await {
-            Some(market_data) => {
-                // info!("provider market data"; "data" => &market_data);
-                let mut oracle = price_oracle.write().await;
-                oracle.consume(&market_data);
-            }
-            None => {
-                error!("can't get market data from channel");
-                break;
+        tokio::select! {
+            data = rx.recv() => {
+                match data {
+                Some(market_data) => {
+                    let mut oracle = price_oracle.write().await;
+                    oracle.consume(&market_data);
+                }
+                None => {
+                    error!("can't get market data from channel");
+                    break;
+                }
+                }
             }
         }
     }

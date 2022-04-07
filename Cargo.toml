@@ -21,11 +21,11 @@ serde = { version = "1", features = ["derive"] }
 duration-string = { version = "0.0.6", features = ["serde"] }
 # duration_string = { version = "0.0.6", features = ["serde_support"] }
 erased-serde = "0.3.20"
-# PepeTeam
-pepe-config = "0.0.1"
-pepe-log = "0.0.5"
 # Async
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "macros", "sync"] }
 async-trait = "0.1.52"
 # http
 reqwest = { version = "0.11.10", features = ["json"] }
+# PepeTeam
+pepe-config = "0.0.1"
+pepe-log = "0.0.5"
