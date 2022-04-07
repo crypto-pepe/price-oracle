@@ -1,3 +1,5 @@
+price_feeds: []
+
 price_oracle:
   delay: 5s
   ttl: 1m
