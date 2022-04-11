@@ -29,7 +29,7 @@ pub trait MarketDataCollector: Send + Sync {
 }
 
 pub fn init_collectors(
-    config: &Vec<CollectorConfig>,
+    config: &[CollectorConfig],
 ) -> Result<Vec<Arc<dyn MarketDataCollector>>, Error> {
     config
         .iter()
@@ -43,7 +43,7 @@ pub fn init_collectors(
                     "bitfinex" => Ok(Arc::new(bitfinex::BitfinexMarketDataCollector::new(
                         collector_config,
                     ))),
-                    _ => Err(Error::CollectorError(String::from("unsupported kind"))),
+                    _ => Err(Error::Collector(String::from("unsupported kind"))),
                 }
             },
         )

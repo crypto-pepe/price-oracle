@@ -9,7 +9,7 @@ mod p2p;
 
 #[async_trait]
 pub trait Provider: Send + Sync {
-    async fn send(&self, prices: &Vec<MarketData>) -> Result<(), Error>;
+    async fn send(&self, prices: &[MarketData]) -> Result<(), Error>;
 }
 
 pub fn init_providers(config: &ProvidersConfig) -> Result<Vec<Arc<dyn Provider>>, Error> {

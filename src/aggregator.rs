@@ -14,7 +14,7 @@ impl PriceAggregator {
     pub fn new(ttl: &Duration) -> Self {
         PriceAggregator {
             prices_map: HashMap::new(),
-            ttl: ttl.clone(),
+            ttl: *ttl,
         }
     }
 
@@ -43,7 +43,7 @@ impl PriceAggregator {
 
     // collect avg result
     pub fn aggregate(&self) -> Result<Vec<MarketData>, Error> {
-        Ok(self
+        match self
             .prices_map
             .values()
             .cloned()
@@ -53,10 +53,11 @@ impl PriceAggregator {
                     .filter(|price| {
                         price.timestamp > Utc::now().timestamp() - (self.ttl.as_secs() as i64)
                     })
+                    .cloned()
                     .collect::<Vec<_>>();
 
                 if filtered_prices.len() == 1 {
-                    filtered_prices.get(0).map(|price| price.clone().clone())
+                    filtered_prices.get(0).cloned()
                 } else {
                     let volume: BigDecimal = filtered_prices
                         .iter()
@@ -84,7 +85,10 @@ impl PriceAggregator {
                 }
             })
             .collect::<Option<Vec<_>>>()
-            .unwrap_or(vec![]))
+        {
+            Some(prices) => Ok(prices),
+            None => Ok(vec![]),
+        }
     }
 }
 

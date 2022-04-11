@@ -30,11 +30,7 @@ pub struct P2PProvider {
 impl P2PProvider {
     pub fn new(config: &P2PProxyProviderConfig) -> Self {
         P2PProvider {
-            endpoint: format!(
-                "{}{}",
-                config.endpoint.clone(),
-                P2P_PUBSUB_PUBLISH_URL.to_string()
-            ),
+            endpoint: format!("{}{}", config.endpoint.clone(), P2P_PUBSUB_PUBLISH_URL),
             topic: config.topic.clone(),
             client: Client::new(),
         }
@@ -43,7 +39,7 @@ impl P2PProvider {
 
 #[async_trait]
 impl Provider for P2PProvider {
-    async fn send(&self, prices: &Vec<MarketData>) -> Result<(), Error> {
+    async fn send(&self, prices: &[MarketData]) -> Result<(), Error> {
         let mut binary_data = vec![];
         oracle::Prices {
             prices: prices
@@ -54,7 +50,7 @@ impl Provider for P2PProvider {
                         price: data
                             .price
                             .to_f64()
-                            .ok_or(Error::ProviderError("can't encode price".to_string()))?,
+                            .ok_or_else(|| Error::Provider("can't encode price".to_string()))?,
                         timestamp: data.timestamp,
                     })
                 })
@@ -74,7 +70,7 @@ impl Provider for P2PProvider {
             .status()
         {
             StatusCode::OK => Ok(()),
-            status_code => Err(Error::ProviderError(format!(
+            status_code => Err(Error::Provider(format!(
                 "can't feed data to proxy, status code: {}",
                 status_code
             ))),

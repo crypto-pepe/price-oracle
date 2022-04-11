@@ -35,33 +35,24 @@ impl BitfinexMarketDataCollector {
     }
 
     async fn get_market_data(&self, ticker: String) -> Result<MarketData, Error> {
-        let url = format!(
-            "{}/v2/ticker/t{}{}",
-            self.endpoint,
-            ticker,
-            USD_TICKER.to_string()
-        );
+        let url = format!("{}/v2/ticker/t{}{}", self.endpoint, ticker, USD_TICKER);
         let res: Vec<f64> = self.client.get(url).send().await?.json().await?;
         let price = res
             .get(6)
-            .ok_or(Error::ProviderError(String::from("can't decode price")))
-            .map(|num| BigDecimal::from_f64(num.clone()))?
-            .ok_or(Error::CollectorError(String::from(
-                "can't decode price format",
-            )))?;
+            .ok_or_else(|| Error::Provider(String::from("can't decode price")))
+            .map(|num| BigDecimal::from_f64(*num))?
+            .ok_or_else(|| Error::Collector(String::from("can't decode price format")))?;
         let volume = res
             .get(7)
-            .ok_or(Error::ProviderError(String::from("can't decode volume")))
-            .map(|num| BigDecimal::from_f64(num.clone()))?
-            .ok_or(Error::CollectorError(String::from(
-                "can't decode volume format",
-            )))?;
+            .ok_or_else(|| Error::Provider(String::from("can't decode volume")))
+            .map(|num| BigDecimal::from_f64(*num))?
+            .ok_or_else(|| Error::Collector(String::from("can't decode volume format")))?;
 
         Ok(MarketData {
             provider: BITFINEX_PROVIDER_NAME.to_string(),
             ticker,
             price,
-            volume: volume,
+            volume,
             timestamp: Utc::now().timestamp(),
         })
     }

@@ -44,9 +44,7 @@ impl BinanceMarketDataCollector {
     async fn get_market_data(&self, ticker: String) -> Result<MarketData, Error> {
         let url = format!(
             "{}/api/v3/ticker/24hr?symbol={}{}",
-            self.endpoint,
-            ticker,
-            USD_TICKER.to_string()
+            self.endpoint, ticker, USD_TICKER
         );
         let res: Response24h = self.client.get(url).send().await?.json().await?;
 
