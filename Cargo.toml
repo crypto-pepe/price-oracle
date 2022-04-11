@@ -3,11 +3,8 @@ name = "p2p-price-oracle"
 version = "0.0.1"
 edition = "2018"
 
-[[bin]]
-name = "oracle"
-path = "src/main.rs"
-
 [dependencies]
+futures = "0.3.21"
 thiserror = "1.0.30"
 config = "0.12.0"
 chrono = "0.4.19"
@@ -26,6 +23,18 @@ tokio = { version = "1.16.1", features = ["rt-multi-thread", "macros", "sync"] }
 async-trait = "0.1.52"
 # http
 reqwest = { version = "0.11.10", features = ["json"] }
+# proto
+bytes = "1.1.0"
+prost = "0.10"
+prost-types = "0.10"
+base64 = "0.13.0"
 # PepeTeam
 pepe-config = "0.0.1"
 pepe-log = "0.0.5"
+
+[build-dependencies]
+prost-build = "0.10.0"
+
+[[bin]]
+name = "oracle"
+path = "src/main.rs"

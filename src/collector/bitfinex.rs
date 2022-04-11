@@ -1,5 +1,5 @@
-use super::{MarketData, Provider};
-use crate::config::ProviderConfig;
+use super::{MarketData, MarketDataCollector};
+use crate::config::CollectorConfig;
 use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
@@ -15,7 +15,7 @@ const BITFINEX_PROVIDER_NAME: &str = "bitfinex";
 const USD_TICKER: &str = "USD";
 
 #[derive(Debug, Clone)]
-pub struct BitfinexProvider {
+pub struct BitfinexMarketDataCollector {
     endpoint: String,
     tickers: Vec<String>,
     batch_delay: Duration,
@@ -23,9 +23,9 @@ pub struct BitfinexProvider {
     client: Client,
 }
 
-impl BitfinexProvider {
-    pub fn new(config: &ProviderConfig) -> Self {
-        BitfinexProvider {
+impl BitfinexMarketDataCollector {
+    pub fn new(config: &CollectorConfig) -> Self {
+        BitfinexMarketDataCollector {
             endpoint: config.endpoint.clone(),
             tickers: config.tickers.clone(),
             batch_delay: config.delay.batch.into(),
@@ -35,41 +35,32 @@ impl BitfinexProvider {
     }
 
     async fn get_market_data(&self, ticker: String) -> Result<MarketData, Error> {
-        let url = format!(
-            "{}/v2/ticker/t{}{}",
-            self.endpoint,
-            ticker,
-            USD_TICKER.to_string()
-        );
+        let url = format!("{}/v2/ticker/t{}{}", self.endpoint, ticker, USD_TICKER);
         let res: Vec<f64> = self.client.get(url).send().await?.json().await?;
         let price = res
             .get(6)
-            .ok_or(Error::ProviderError(String::from("can't decode price")))
-            .map(|num| BigDecimal::from_f64(num.clone()))?
-            .ok_or(Error::ProviderError(String::from(
-                "can't decode price format",
-            )))?;
+            .ok_or_else(|| Error::Provider(String::from("can't decode price")))
+            .map(|num| BigDecimal::from_f64(*num))?
+            .ok_or_else(|| Error::Collector(String::from("can't decode price format")))?;
         let volume = res
             .get(7)
-            .ok_or(Error::ProviderError(String::from("can't decode volume")))
-            .map(|num| BigDecimal::from_f64(num.clone()))?
-            .ok_or(Error::ProviderError(String::from(
-                "can't decode volume format",
-            )))?;
+            .ok_or_else(|| Error::Provider(String::from("can't decode volume")))
+            .map(|num| BigDecimal::from_f64(*num))?
+            .ok_or_else(|| Error::Collector(String::from("can't decode volume format")))?;
 
         Ok(MarketData {
             provider: BITFINEX_PROVIDER_NAME.to_string(),
             ticker,
             price,
-            volume: volume,
+            volume,
             timestamp: Utc::now().timestamp(),
         })
     }
 }
 
 #[async_trait]
-impl Provider for BitfinexProvider {
-    async fn produce(&self, tx: Sender<MarketData>) {
+impl MarketDataCollector for BitfinexMarketDataCollector {
+    async fn collect(&self, tx: Sender<MarketData>) {
         loop {
             for ticker in &self.tickers {
                 match self.get_market_data(ticker.clone()).await {

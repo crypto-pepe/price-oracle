@@ -1,24 +1,23 @@
-mod binance;
-mod bitfinex;
+use std::sync::Arc;
 
+use crate::{collector::MarketData, config::ProvidersConfig, error::Error};
 use async_trait::async_trait;
-use bigdecimal::BigDecimal;
-pub use binance::BinanceProvider;
-pub use bitfinex::BitfinexProvider;
-use serde::Serialize;
-use slog_extlog_derive::SlogValue;
-use tokio::sync::mpsc::Sender;
 
-#[derive(Debug, Clone, Serialize, SlogValue)]
-pub struct MarketData {
-    pub provider: String,
-    pub ticker: String,
-    pub price: BigDecimal,
-    pub volume: BigDecimal,
-    pub timestamp: i64,
-}
+use self::p2p::P2PProvider;
+
+mod p2p;
 
 #[async_trait]
 pub trait Provider: Send + Sync {
-    async fn produce(&self, tx: Sender<MarketData>);
+    async fn send(&self, prices: &[MarketData]) -> Result<(), Error>;
+}
+
+pub fn init_providers(config: &ProvidersConfig) -> Result<Vec<Arc<dyn Provider>>, Error> {
+    config
+        .p2p
+        .iter()
+        .map(|config| -> Result<Arc<dyn Provider>, Error> {
+            Ok(Arc::new(P2PProvider::new(config)))
+        })
+        .collect::<Result<Vec<Arc<dyn Provider>>, Error>>()
 }
