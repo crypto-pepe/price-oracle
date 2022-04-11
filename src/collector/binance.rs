@@ -1,5 +1,5 @@
-use super::{MarketData, Provider};
-use crate::config::ProviderConfig;
+use super::{MarketData, MarketDataCollector};
+use crate::config::CollectorConfig;
 use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
@@ -22,7 +22,7 @@ struct Response24h {
 }
 
 #[derive(Debug, Clone)]
-pub struct BinanceProvider {
+pub struct BinanceMarketDataCollector {
     endpoint: String,
     tickers: Vec<String>,
     batch_delay: Duration,
@@ -30,9 +30,9 @@ pub struct BinanceProvider {
     client: Client,
 }
 
-impl BinanceProvider {
-    pub fn new(config: &ProviderConfig) -> Self {
-        BinanceProvider {
+impl BinanceMarketDataCollector {
+    pub fn new(config: &CollectorConfig) -> Self {
+        BinanceMarketDataCollector {
             endpoint: config.endpoint.clone(),
             tickers: config.tickers.clone(),
             batch_delay: config.delay.batch.into(),
@@ -61,8 +61,8 @@ impl BinanceProvider {
 }
 
 #[async_trait]
-impl Provider for BinanceProvider {
-    async fn produce(&self, tx: Sender<MarketData>) {
+impl MarketDataCollector for BinanceMarketDataCollector {
+    async fn collect(&self, tx: Sender<MarketData>) {
         loop {
             for ticker in &self.tickers {
                 match self.get_market_data(ticker.clone()).await {

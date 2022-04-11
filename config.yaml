@@ -1,10 +1,4 @@
-price_feeds: []
-
-price_oracle:
-  delay: 5s
-  ttl: 1m
-
-providers:
+collectors:
   - kind: binance
     enabled: true
     endpoint: "https://api.binance.com"
@@ -24,3 +18,12 @@ providers:
     tickers:
       - BTC
       - ETH
+
+oracle:
+  delay: 5s
+  ttl: 1m
+
+providers:
+  p2p:
+    - topic: pepe:prices
+      endpoint: "http://localhost:3000"
