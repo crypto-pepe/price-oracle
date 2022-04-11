@@ -1,9 +1,8 @@
-use crate::{
-    config::AppConfig,
-    error::Error,
-    price_oracle::PriceOracle,
-    provider::{BinanceProvider, BitfinexProvider, MarketData, Provider},
-};
+use crate::aggregator::PriceAggregator;
+use crate::collector::{MarketData, MarketDataVec};
+use crate::provider::init_providers;
+use crate::{collector::init_collectors, config::AppConfig, error::Error};
+use futures::future::try_join_all;
 use pepe_config::load;
 use pepe_log::{error, info};
 use std::sync::Arc;
@@ -11,9 +10,10 @@ use tokio::sync::mpsc;
 use tokio::sync::RwLock;
 use tokio::time::sleep;
 
+mod aggregator;
+mod collector;
 mod config;
 mod error;
-mod price_oracle;
 mod provider;
 
 const DEFAULT_CONFIG_PATH: &str = include_str!("../config.yaml");
@@ -22,57 +22,44 @@ const DEFAULT_CONFIG_PATH: &str = include_str!("../config.yaml");
 async fn main() -> Result<(), Error> {
     info!("start application");
 
-    // load config from file
     let app_config: AppConfig = load(DEFAULT_CONFIG_PATH, ::config::FileFormat::Yaml)?;
     info!("config loaded"; "config" => &app_config);
 
-    // init providers from configs
-    let providers = app_config
-        .providers
-        .iter()
-        .filter(|provider_config| provider_config.enabled)
-        .map(|provider_config| -> Result<Arc<dyn Provider>, Error> {
-            match provider_config.kind.as_str() {
-                "binance" => Ok(Arc::new(BinanceProvider::new(provider_config))),
-                "bitfinex" => Ok(Arc::new(BitfinexProvider::new(provider_config))),
-                _ => Err(Error::ProviderError(String::from("unsupported kind"))),
-            }
-        })
-        .collect::<Result<Vec<Arc<dyn Provider>>, Error>>()?;
-
-    let price_oracle = Arc::new(RwLock::new(PriceOracle::new(
-        &app_config.price_oracle.ttl.into(),
+    let collectors = init_collectors(&app_config.collectors)?;
+    let providers = init_providers(&app_config.providers)?;
+    let price_oracle = Arc::new(RwLock::new(PriceAggregator::new(
+        &app_config.oracle.ttl.into(),
     )));
+
     let (tx, mut rx) = mpsc::channel::<MarketData>(100);
-    // start providers
-    for provider_wrapper in &providers {
+    for collector in &collectors {
         let sender = tx.clone();
-        let provider = provider_wrapper.clone();
+        let collector = collector.clone();
 
         tokio::spawn(async move {
-            provider.clone().produce(sender).await;
+            collector.clone().collect(sender).await;
         });
     }
 
     let price_oracle_consumer = price_oracle.clone();
     tokio::spawn(async move {
         loop {
-            sleep(app_config.price_oracle.delay.into()).await;
-
+            sleep(app_config.oracle.delay.into()).await;
             let oracle = price_oracle_consumer.read().await;
-            match oracle.collect() {
+            match oracle.aggregate() {
                 Ok(prices) => {
-                    for price in prices.iter() {
-                        info!("provider market data"; "price" => &price);
-                    }
-                    // match swarm.behaviour_mut().gossipsub.publish(topic.clone(), []) {
-                    //     Ok(id) => {
-                    //         debug!("publish data success"; "id" => id.to_string());
-                    //     }
-                    //     Err(e) => {
-                    //         error!("can't collect prices: {}", e);
-                    //     }
-                    // };
+                    info!("new market data"; "prices" => MarketDataVec{prices: prices.clone()});
+
+                    if let Err(e) = try_join_all(
+                        providers
+                            .iter()
+                            .map(|provider| provider.send(&prices))
+                            .collect::<Vec<_>>(),
+                    )
+                    .await
+                    {
+                        error!("can't feed prices: {}", e)
+                    };
                 }
                 Err(e) => error!("can't collect prices: {}", e),
             };
