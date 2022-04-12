@@ -29,8 +29,8 @@ prost = "0.10"
 prost-types = "0.10"
 base64 = "0.13.0"
 # PepeTeam
-pepe-config = "0.0.1"
-pepe-log = "0.0.6"
+pepe-config = "0.0.2"
+pepe-log = "0.0.7"
 
 [build-dependencies]
 prost-build = "0.10.0"
