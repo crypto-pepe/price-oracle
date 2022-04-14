@@ -1,5 +1,5 @@
 use super::{MarketData, MarketDataCollector};
-use crate::config::CollectorConfig;
+use crate::config::{CollectorConfig, Ticker};
 use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
@@ -11,7 +11,6 @@ use std::time::Duration;
 use tokio::{sync::mpsc::Sender, time::sleep};
 
 const BINANCE_PROVIDER_NAME: &str = "binance";
-const USD_TICKER: &str = "USDT";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Response24h {
@@ -24,7 +23,7 @@ struct Response24h {
 #[derive(Debug, Clone)]
 pub struct BinanceMarketDataCollector {
     endpoint: String,
-    tickers: Vec<String>,
+    tickers: Vec<Ticker>,
     batch_delay: Duration,
     request_delay: Duration,
     client: Client,
@@ -41,17 +40,17 @@ impl BinanceMarketDataCollector {
         }
     }
 
-    async fn get_market_data(&self, ticker: String) -> Result<MarketData, Error> {
+    async fn get_market_data(&self, ticker: Ticker) -> Result<MarketData, Error> {
         let url = format!(
-            "{}/api/v3/ticker/24hr?symbol={}{}",
-            self.endpoint, ticker, USD_TICKER
+            "{}/api/v3/ticker/24hr?symbol={}",
+            self.endpoint, ticker.ticker
         );
         let res: Response24h = self.client.get(url).send().await?.json().await?;
 
         Ok(MarketData {
             provider: BINANCE_PROVIDER_NAME.to_string(),
-            ticker,
-            price: res.last_price,
+            ticker: ticker.alias,
+            price: if ticker.inverted{res.last_price.inverse()} else {res.last_price},
             volume: res.volume,
             timestamp: Utc::now().timestamp(),
         })

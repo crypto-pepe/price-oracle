@@ -1,4 +1,5 @@
 use super::delay::DelayConfig;
+use super::ticker::Ticker;
 use serde::{Deserialize, Serialize};
 use slog_extlog_derive::SlogValue;
 
@@ -8,5 +9,5 @@ pub struct CollectorConfig {
     pub enabled: bool,
     pub endpoint: String,
     pub delay: DelayConfig,
-    pub tickers: Vec<String>,
+    pub tickers: Vec<Ticker>,
 }

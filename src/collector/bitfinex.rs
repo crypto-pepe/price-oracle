@@ -1,5 +1,5 @@
 use super::{MarketData, MarketDataCollector};
-use crate::config::CollectorConfig;
+use crate::config::{CollectorConfig, Ticker};
 use crate::error::Error;
 use async_trait::async_trait;
 use bigdecimal::BigDecimal;
@@ -12,12 +12,11 @@ use tokio::sync::mpsc::Sender;
 use tokio::time::sleep;
 
 const BITFINEX_PROVIDER_NAME: &str = "bitfinex";
-const USD_TICKER: &str = "USD";
 
 #[derive(Debug, Clone)]
 pub struct BitfinexMarketDataCollector {
     endpoint: String,
-    tickers: Vec<String>,
+    tickers: Vec<Ticker>,
     batch_delay: Duration,
     request_delay: Duration,
     client: Client,
@@ -34,8 +33,8 @@ impl BitfinexMarketDataCollector {
         }
     }
 
-    async fn get_market_data(&self, ticker: String) -> Result<MarketData, Error> {
-        let url = format!("{}/v2/ticker/t{}{}", self.endpoint, ticker, USD_TICKER);
+    async fn get_market_data(&self, ticker: Ticker) -> Result<MarketData, Error> {
+        let url = format!("{}/v2/ticker/t{}", self.endpoint, ticker.ticker);
         let res: Vec<f64> = self.client.get(url).send().await?.json().await?;
         let price = res
             .get(6)
@@ -47,11 +46,10 @@ impl BitfinexMarketDataCollector {
             .ok_or_else(|| Error::Provider(String::from("can't decode volume")))
             .map(|num| BigDecimal::from_f64(*num))?
             .ok_or_else(|| Error::Collector(String::from("can't decode volume format")))?;
-
         Ok(MarketData {
             provider: BITFINEX_PROVIDER_NAME.to_string(),
-            ticker,
-            price,
+            ticker: ticker.alias,
+            price: if ticker.inverted{price.inverse()} else {price},
             volume,
             timestamp: Utc::now().timestamp(),
         })
