@@ -63,6 +63,12 @@ providers:
 | `endpoint`        | `string`   | collect endpoint                          |
 | `delay.batch`     | `duration` | timeout between batch requests            |
 | `delay.request`   | `duration` | timeout between requests in batch         |
-| `tickers.ticker`  | `string`   | collected tickers pair (BTCUSD, etc)      |
-| `tickers.alias`   | `string`   | ticker pair alias to display              |
-| `tickers.inverted`| `bool`     | if price should be reciprocal (1/x)       |
+| `tickers`         | `Ticker[]` | tickers configurations                    |
+
+### `Ticker`
+
+| fieled    | type       | description                           |
+| ----------| ---------- | --------------------------------------|
+| `ticker`  | `string`   | collected tickers pair (BTCUSD, etc)  |
+| `alias`   | `string`   | ticker pair alias to display          |
+| `inverted`| `bool`     | if price should be reciprocal (1/x)   |
