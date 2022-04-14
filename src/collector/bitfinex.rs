@@ -48,8 +48,16 @@ impl BitfinexMarketDataCollector {
             .ok_or_else(|| Error::Collector(String::from("can't decode volume format")))?;
         Ok(MarketData {
             provider: BITFINEX_PROVIDER_NAME.to_string(),
-            ticker: ticker.alias,
-            price: if ticker.inverted{price.inverse()} else {price},
+            ticker: if ticker.alias.trim().is_empty() {
+                ticker.ticker
+            } else {
+                ticker.alias
+            },
+            price: if ticker.inverted {
+                price.inverse()
+            } else {
+                price
+            },
             volume,
             timestamp: Utc::now().timestamp(),
         })

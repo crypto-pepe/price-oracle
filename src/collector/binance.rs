@@ -49,8 +49,16 @@ impl BinanceMarketDataCollector {
 
         Ok(MarketData {
             provider: BINANCE_PROVIDER_NAME.to_string(),
-            ticker: ticker.alias,
-            price: if ticker.inverted{res.last_price.inverse()} else {res.last_price},
+            ticker: if ticker.alias.trim().is_empty() {
+                ticker.ticker
+            } else {
+                ticker.alias
+            },
+            price: if ticker.inverted {
+                res.last_price.inverse()
+            } else {
+                res.last_price
+            },
             volume: res.volume,
             timestamp: Utc::now().timestamp(),
         })
