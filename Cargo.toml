@@ -1,0 +1,40 @@
+[package]
+name = "price-oracle"
+version = "0.0.1"
+edition = "2018"
+
+[dependencies]
+futures = "0.3.21"
+thiserror = "1.0.30"
+config = "0.12.0"
+chrono = "0.4.19"
+bigdecimal = { version = "0.3.0", features = ["serde"] }
+# log
+slog = { version = "2.7.0", features = ["nested-values"] }
+slog-extlog = "8.0.0"
+slog-extlog-derive = "8.0.0"
+# serde
+serde = { version = "1", features = ["derive"] }
+duration-string = { version = "0.0.6", features = ["serde"] }
+# duration_string = { version = "0.0.6", features = ["serde_support"] }
+erased-serde = "0.3.20"
+# Async
+tokio = { version = "1.16.1", features = ["rt-multi-thread", "macros", "sync"] }
+async-trait = "0.1.52"
+# http
+reqwest = { version = "0.11.10", features = ["json"] }
+# proto
+bytes = "1.1.0"
+prost = "0.10"
+prost-types = "0.10"
+base64 = "0.13.0"
+# PepeTeam
+pepe-config = "0.0.2"
+pepe-log = "0.0.7"
+
+[build-dependencies]
+prost-build = "0.10.0"
+
+[[bin]]
+name = "oracle"
+path = "src/main.rs"

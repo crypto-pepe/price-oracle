@@ -1,0 +1,39 @@
+collectors:
+  - kind: binance
+    enabled: true
+    endpoint: "https://api.binance.com"
+    delay:
+      batch: 5s
+      request: 100ms
+    tickers:
+      - ticker: "BTCUSDT"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSDT"
+        alias: "ETH"
+        inverted: false
+      - ticker: "WAVESUSDT"
+        alias: "WAVES"
+        inverted: false 
+  - kind: bitfinex
+    enabled: true
+    endpoint: "https://api-pub.bitfinex.com"
+    delay:
+      batch: 5s
+      request: 100ms
+    tickers:
+      - ticker: "BTCUSD"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSD"
+        alias: "ETH"
+        inverted: false
+
+oracle:
+  delay: 5s
+  ttl: 1m
+
+providers:
+  p2p:
+    - topic: pepe:prices
+      endpoint: "http://localhost:3000"
