@@ -91,7 +91,7 @@ impl MarketDataCollector for BinanceMarketDataCollector {
 
 #[test]
 fn test_inverse() {
-    use::bigdecimal::*;
+    use ::bigdecimal::*;
     use std::str::FromStr;
 
     let vals = vec![
@@ -105,8 +105,7 @@ fn test_inverse() {
         let i = a.inverse();
         let b = BigDecimal::from_str(y).unwrap();
         assert_eq!(i, b);
-        assert_eq!(BigDecimal::from(1)/&a, b);
+        assert_eq!(BigDecimal::from(1) / &a, b);
         assert_eq!(i.inverse(), a);
-        // assert_eq!(a.scale, b.scale, "scale mismatch ({} != {}", a, b);
     }
 }
