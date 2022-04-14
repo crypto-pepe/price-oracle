@@ -21,9 +21,15 @@ collectors:
       batch: 5s
       request: 100ms
     tickers:
-      - BTC
-      - ETH
-      - WAVES
+      - ticker: "BTCUSDT"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSDT"
+        alias: "ETH"
+        inverted: false
+      - ticker: "WAVESUSDT"
+        alias: "WAVES"
+        inverted: false 
   - kind: bitfinex
     enabled: true
     endpoint: "https://api-pub.bitfinex.com"
@@ -31,8 +37,12 @@ collectors:
       batch: 5s
       request: 100ms
     tickers:
-      - BTC
-      - ETH
+      - ticker: "BTCUSD"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSD"
+        alias: "ETH"
+        inverted: false
 
 oracle:
   delay: 5s
@@ -46,11 +56,19 @@ providers:
 
 ### `Collector`
 
-| fieled          | type       | description                               |
-| --------------- | ---------- | ----------------------------------------- |
-| `kind`          | `string`   | kind of collector `binance` or `bitfinex` |
-| `enabled`       | `bool`     | enable/disable collector                  |
-| `endpoint`      | `string`   | collect endpoint                          |
-| `delay.batch`   | `duration` | timeout between batch requests            |
-| `delay.request` | `duration` | timeout between requests in batch         |
-| `tickers`       | `string[]` | collected tickers (BTC,ETH etc)           |
+| fieled            | type       | description                               |
+| ------------------| ---------- | ----------------------------------------- |
+| `kind`            | `string`   | kind of collector `binance` or `bitfinex` |
+| `enabled`         | `bool`     | enable/disable collector                  |
+| `endpoint`        | `string`   | collect endpoint                          |
+| `delay.batch`     | `duration` | timeout between batch requests            |
+| `delay.request`   | `duration` | timeout between requests in batch         |
+| `tickers`         | `Ticker[]` | tickers configurations                    |
+
+### `Ticker`
+
+| fieled    | type       | description                           |
+| ----------| ---------- | --------------------------------------|
+| `ticker`  | `string`   | collected tickers pair (BTCUSD, etc)  |
+| `alias`   | `string`   | ticker pair alias to display          |
+| `inverted`| `bool`     | if price should be reciprocal (1/x)   |

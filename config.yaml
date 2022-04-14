@@ -6,9 +6,15 @@ collectors:
       batch: 5s
       request: 100ms
     tickers:
-      - BTC
-      - ETH
-      - WAVES
+      - ticker: "BTCUSDT"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSDT"
+        alias: "ETH"
+        inverted: false
+      - ticker: "WAVESUSDT"
+        alias: "WAVES"
+        inverted: false 
   - kind: bitfinex
     enabled: true
     endpoint: "https://api-pub.bitfinex.com"
@@ -16,8 +22,12 @@ collectors:
       batch: 5s
       request: 100ms
     tickers:
-      - BTC
-      - ETH
+      - ticker: "BTCUSD"
+        alias: "BTC"
+        inverted: false
+      - ticker: "ETHUSD"
+        alias: "ETH"
+        inverted: false
 
 oracle:
   delay: 5s

@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn empty() {
         let ttl = Duration::from_secs(1);
-        assert!(PriceAggregator::new(&ttl).aggregate().unwrap().len() == 0);
+        assert!(PriceAggregator::new(&ttl).aggregate().unwrap().is_empty());
     }
 
     #[test]
