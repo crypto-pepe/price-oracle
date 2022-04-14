@@ -5,5 +5,5 @@ use slog_extlog_derive::SlogValue;
 pub struct Ticker {
     pub ticker: String,
     pub alias: String,
-    pub inverted: bool, 
+    pub inverted: bool,
 }
